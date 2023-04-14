@@ -32,7 +32,9 @@ public class TwinderCache {
         return cache;
     }
 
-    public static void emptyCache() {
-        cache.invalidateAll();
+    public static void emptyCacheIfFull() {
+        if (cache.estimatedSize() > cacheCapacity) {
+            cache.invalidateAll();
+        }
     }
 }

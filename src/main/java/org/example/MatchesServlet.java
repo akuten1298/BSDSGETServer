@@ -54,6 +54,10 @@ public class MatchesServlet extends HttpServlet {
             Document myDoc = cache.retrieveFromCache(userId);
             if (myDoc == null) {
                 myDoc = collection.find(Filters.eq(MONGO_ID, userId)).first();
+                printWriter.print("in not the cache");
+
+            } else {
+                printWriter.print("in the cache");
             }
             MatchesResponse matchesResponse;
             if(myDoc != null) {
@@ -61,7 +65,13 @@ public class MatchesServlet extends HttpServlet {
                 cache.insertToCache(userId, myDoc);
                 List<String> matchList = new ArrayList<>();
                 if(myDoc.get(LIKES) != null) {
-                    Set<String> likesSet = new HashSet<>((Collection) myDoc.get(LIKES));
+                    //Set<String> likesSet = new HashSet<>((Collection) myDoc.get(LIKES));
+                    matchList = new ArrayList<>((Collection) myDoc.get(LIKES));
+
+                    /**
+                     * we only need to have potential match.
+                     */
+                    /*
                     for(String swipee : likesSet) {
                         Document swipeeDoc = collection.find(Filters.eq(MONGO_ID, swipee)).first();
                         if(swipeeDoc == null)
@@ -72,6 +82,8 @@ public class MatchesServlet extends HttpServlet {
                                 matchList.add(swipee);
                         }
                     }
+
+                     */
                 }
 
                 matchesResponse = new MatchesResponse(matchList);
@@ -84,7 +96,7 @@ public class MatchesServlet extends HttpServlet {
                 printWriter.print(resp);
             }
         }
-
+        cache.emptyCacheIfFull();
         printWriter.flush();
         printWriter.close();
     }

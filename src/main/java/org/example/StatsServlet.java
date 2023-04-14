@@ -59,6 +59,8 @@ public class StatsServlet extends HttpServlet {
             // check if it exists in cache
             if (myDoc == null) {
                 myDoc = collection.find(Filters.eq(MONGO_ID, userId)).first();
+            } else {
+                System.err.println("it was in the cache!");
             }
             StatsResponse statsResponse;
             if(myDoc != null) {
@@ -78,7 +80,7 @@ public class StatsServlet extends HttpServlet {
                 printWriter.print(resp);
             }
         }
-
+        cache.emptyCacheIfFull();
         printWriter.flush();
         printWriter.close();
     }
