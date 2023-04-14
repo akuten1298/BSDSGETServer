@@ -27,12 +27,14 @@ public class StatsServlet extends HttpServlet {
     private static String SWIPE_DB = "swipe";
     private static String LIKES = "likes";
     private static String DISLIKES = "dislikes";
+    private static TwinderCache cache;
 
     @Override
     public void init() throws ServletException {
         MongoConfig mongoConfig = MongoConfig.getInstance();
         MongoDatabase database = mongoConfig.getDatabase();
         collection = database.getCollection(SWIPE_DB);
+        cache = new TwinderCache();
     }
 
     @Override
@@ -53,10 +55,16 @@ public class StatsServlet extends HttpServlet {
         } else {
             String userId = urlPath.substring(1);
             res.setStatus(HttpServletResponse.SC_OK);
-
-            Document myDoc = collection.find(Filters.eq(MONGO_ID, userId)).first();
+            Document myDoc = cache.retrieveFromCache(userId);
+            // check if it exists in cache
+            if (myDoc == null) {
+                myDoc = collection.find(Filters.eq(MONGO_ID, userId)).first();
+            }
             StatsResponse statsResponse;
             if(myDoc != null) {
+                // add to cache
+                cache.insertToCache(userId, myDoc);
+
                 int likes = myDoc.get(LIKES)  == null ? 0 : new HashSet<>((Collection) myDoc.get(LIKES)).size();
                 int disLikes = myDoc.get(DISLIKES)  == null ? 0 : new HashSet<>((Collection) myDoc.get(DISLIKES)).size();
 

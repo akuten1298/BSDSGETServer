@@ -22,12 +22,14 @@ public class MatchesServlet extends HttpServlet {
     private static String SWIPE_DB = "swipe";
     private static String MONGO_ID = "_id";
     private static String LIKES = "likes";
+    private static TwinderCache cache;
 
     @Override
     public void init() throws ServletException {
         MongoConfig mongoConfig = MongoConfig.getInstance();
         MongoDatabase database = mongoConfig.getDatabase();
         collection = database.getCollection(SWIPE_DB);
+        cache = new TwinderCache();
     }
 
     @Override
@@ -48,11 +50,15 @@ public class MatchesServlet extends HttpServlet {
         } else {
             String userId = urlPath.substring(1);
             res.setStatus(HttpServletResponse.SC_OK);
-
-            Document myDoc = collection.find(Filters.eq(MONGO_ID, userId)).first();
+            // check if it exists in cache
+            Document myDoc = cache.retrieveFromCache(userId);
+            if (myDoc == null) {
+                myDoc = collection.find(Filters.eq(MONGO_ID, userId)).first();
+            }
             MatchesResponse matchesResponse;
             if(myDoc != null) {
-
+                // add to cache
+                cache.insertToCache(userId, myDoc);
                 List<String> matchList = new ArrayList<>();
                 if(myDoc.get(LIKES) != null) {
                     Set<String> likesSet = new HashSet<>((Collection) myDoc.get(LIKES));

@@ -2,6 +2,7 @@ package org.example;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
@@ -11,6 +12,8 @@ public class MongoConfig {
     private MongoClient mongoClient;
     private MongoDatabase database;
     private static MongoConfig instance = null;
+    private static String primaryEC2IP = "35.90.20.84";
+
 
     public static MongoConfig getInstance() {
         if(instance == null)
@@ -19,12 +22,15 @@ public class MongoConfig {
     }
 
     private MongoConfig() {
-        String connectionString = "mongodb+srv://twinder_username:twinder_password@twindercluster.rdueczb.mongodb.net/?retryWrites=true&w=majority";
+        ConnectionString connectionString = new ConnectionString("mongodb://admin:password@" + primaryEC2IP + ":27017/?maxPoolSize=50");
         MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(connectionString))
+                .applyConnectionString(connectionString)
+                .readPreference(ReadPreference.secondaryPreferred()) // set the read preference to secondary preferred
                 .build();
+
         mongoClient = MongoClients.create(settings);
         database = mongoClient.getDatabase("twinder");
+
     }
 
     public MongoClient getMongoClient() {
